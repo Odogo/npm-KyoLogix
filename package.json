@@ -1,0 +1,34 @@
+{
+	"name": "kyologix",
+	"description": "A package of utilities for Discord.js bots",
+	"version": "1.0.0",
+	"author": "Odogo",
+	"license": "MIT",
+	"type": "commonjs",
+	"keywords": [
+		"discord.js",
+		"discord",
+		"utilities",
+		"utils"
+	],
+	"homepage": "https://github.com/Odogo/npm-KyoLogix#readme",
+	"bugs": {
+		"url": "https://github.com/Odogo/npm-KyoLogix/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Odogo/npm-KyoLogix.git"
+	},
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"scripts": {
+		"build": "tsc"
+	},
+	"dependencies": {
+		"discord.js": "^14.19.3"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3"
+	}
+}
