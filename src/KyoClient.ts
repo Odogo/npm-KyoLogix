@@ -4,6 +4,8 @@ import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand";
 import { KyoEvent } from "./structure/KyoEvent";
 import { readdir } from "fs/promises";
 import { System } from "./utils/System";
+import path from "path";
+import { pathToFileURL } from "url";
 
 export interface KyoClientPaths {
     commands?: PathLike,
@@ -25,12 +27,13 @@ export class KyoClient extends Client {
 
             await readdir(filePath, { withFileTypes: true }).then(async (dirents) => {
                 for (const dirent of dirents) {
+                    const resolved = path.resolve(String(filePath), dirent.name);
                     if (dirent.isDirectory()) {
-                        await KyoClient.fetchFiles(`${filePath}/${dirent.name}`).then((fetchedFiles) => {
+                        await KyoClient.fetchFiles(resolved).then((fetchedFiles) => {
                             files.push(...fetchedFiles);
                         });
                     } else if (dirent.isFile()) {
-                        files.push(`${filePath}/${dirent.name}`);
+                        files.push(resolved);
                     } else {
                         System.warn(`[fetchFiles] 'dirent' is not a file or directory: ${dirent.name}`);
                     }
@@ -91,7 +94,8 @@ export class KyoClient extends Client {
 
         await KyoClient.fetchFiles(filePath).then(async (files) => {
             for (const file of files) {
-                const event = (await import(file))?.default as KyoEvent<keyof ClientEvents>;
+                const fileUrl = pathToFileURL(file).href;
+                const event = (await import(fileUrl))?.default as KyoEvent<keyof ClientEvents>;
                 if (!event || !event.event || !event.execute) continue;
 
                 this._events?.set(event.event, Array.from(this._events.get(event.event) || []).concat(event));
@@ -114,7 +118,8 @@ export class KyoClient extends Client {
 
         await KyoClient.fetchFiles(filePath).then(async (files) => {
             for (const file of files) {
-                const command = (await import(file))?.default as KyoCommand<KyoCommandOptions>;
+                const fileUrl = pathToFileURL(file).href;
+                const command = (await import(fileUrl))?.default as KyoCommand<KyoCommandOptions>;
                 if (!command.data) continue;
 
                 this._commands.set(command.data.name, command);
