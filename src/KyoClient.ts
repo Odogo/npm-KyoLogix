@@ -142,6 +142,15 @@ export class KyoClient extends Client {
         }
     }
 
+    public override login(token?: string): Promise<string> {
+        this.once(Events.ClientReady, async () => {
+            await this.pushCommands(Array.from(this.commands.values().map((opt) => opt.data)));
+            System.debug("[KyoClient] Client responded with \"Ready\" event!");
+        });
+
+        return super.login(token);
+    }
+
     /**
      * Handles an incoming request for any commands to execute their specific command.
      * 
@@ -156,6 +165,25 @@ export class KyoClient extends Client {
         if (command === undefined) {
             System.warn(`[Commands] Failed to find ${interaction.commandName} despite being registered with Discord.`);
             return;
+        }
+
+        try {
+            switch (true) {
+                case command.isChatCommand() && interaction.isChatInputCommand():
+                    await command.data.run(this, interaction);
+                    break;
+                case command.isUserCommand() && interaction.isUserContextMenuCommand():
+                    await command.data.run(this, interaction);
+                    break;
+                case command.isMessageCommand() && interaction.isMessageContextMenuCommand():
+                    await command.data.run(this, interaction);
+                    break;
+            }
+
+            System.info(`[Commands] Command ${interaction.commandName} resulted in SUCCESS`);
+        } catch (error) {
+            System.warn(`[Commands] Command ${interaction.commandName} resulted in ERROR: ${error}`);
+            System.warn(error);
         }
     }
 }

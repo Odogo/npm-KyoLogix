@@ -32,9 +32,9 @@ export class System {
      */
     public static log(level: LogLevel, printable: any): void {
         if (level === LogLevel.DEBUG)
-            if (process.env.debug === "false") return;
+            if (process.env.logging_debug === "false") return;
 
-        let dateFormat = new Date().toLocaleString('en-us', { timeZone: 'America/Chicago', timeStyle: 'medium', dateStyle: 'short' });
+        let dateFormat = new Date().toLocaleString('en-us', { timeZone: process.env.logging_timezone || 'Utc', timeStyle: 'medium', dateStyle: 'short' });
         console.log(level.color + " [" + dateFormat + "] [" + level.name.toUpperCase() + "]", printable);
     }
 
