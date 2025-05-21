@@ -1,36 +1,42 @@
 {
     "compilerOptions": {
-        "lib": [ "ESNext" ],
-        
-        "module": "ESNext",
+        // Language & Output
         "target": "ES2020",
-
-        "moduleResolution": "Node",
+        "module": "commonjs",
+        "lib": ["ES2020"],
         "outDir": "dist",
+        "rootDir": "src",
 
-        "strict": true,
-        "noImplicitAny": true,
+        // Strictness
+        "strict": true, // enable all strict type-checking options
+        "noImplicitAny": true, // catch missing types
+        "noUnusedLocals": true, // flag unused variables
+        "noUnusedParameters": true, // flag unused params
+        "noImplicitReturns": true, // require return statements on all paths
+        "noFallthroughCasesInSwitch": true, // catch switch…case fall-through
 
-        "esModuleInterop": true,
+        // Module Resolution
+        "moduleResolution": "node", // mimic Node.js resolution
+        "esModuleInterop": true, // allow default imports from CommonJS
+        "forceConsistentCasingInFileNames": true, // ensure imports match file casing
+        "skipLibCheck": true, // speed up compilation by skipping .d.ts checks
 
-        "declaration": true,
-        "isolatedModules": true,
+        // Modern Features
+        "resolveJsonModule": true, // import .json files
+        "isolatedModules": true, // required for Babel or ts-node
+        "sourceMap": true, // generate source maps
 
-        "sourceMap": false,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "allowSyntheticDefaultImports": true,
-        "skipLibCheck": true,
-        "skipDefaultLibCheck": true,
-        "resolveJsonModule": true,
-        "importHelpers": true,
-        "strictNullChecks": true
+
+        // Library Only
+        "declaration": true,
+        "declarationMap": true
     },
-    "include": [
-        "src"
-    ],
+    "include": [ "src" ],
     "exclude": [
         "node_modules",
+        "dist",
         "**/*.spec.ts"
     ]
 }

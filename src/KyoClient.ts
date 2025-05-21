@@ -1,4 +1,4 @@
-import { ApplicationCommandDataResolvable, Client, ClientEvents, ClientOptions, Collection, CommandInteraction, Events, Interaction } from "discord.js";
+import { ApplicationCommandDataResolvable, Client, ClientEvents, ClientOptions, Collection, Events, Interaction } from "discord.js";
 import { PathLike } from 'fs';
 import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand";
 import { KyoEvent } from "./structure/KyoEvent";
@@ -6,9 +6,6 @@ import { readdir } from "fs/promises";
 import { System } from "./utils/System";
 import path from "path";
 import { pathToFileURL } from "url";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
 
 export interface KyoClientPaths {
     commands?: PathLike,
@@ -152,7 +149,7 @@ export class KyoClient extends Client {
 
     public override login(token?: string): Promise<string> {
         this.once(Events.ClientReady, async () => {
-            await this.pushCommands(Array.from(this.commands.values().map((opt) => opt.rawData)));
+            await this.pushCommands(Array.from(this.commands.values()).map((opt) => opt.rawData));
             System.debug("[KyoClient] Client responded with \"Ready\" event!");
         });
 

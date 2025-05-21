@@ -1,10 +1,18 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from 'tsup';
 
 export default defineConfig({
-    format: ['cjs', 'esm'],
-    entry: ['./src/index.ts'],
-    dts: true,
-    shims: true,
-    skipNodeModulesBundle: true,
-    clean: true
-})
+    entry: ['src/index.ts'],        // your library/app entry point(s)
+    outDir: 'dist',                 // output directory
+    format: ['cjs', 'esm'],         // CommonJS + ESModule
+    target: 'es2020',               // compile target
+    sourcemap: true,                // source maps for debugging
+    clean: true,                    // rm dist/ on each build
+    splitting: false,               // code-splitting (only works with esm)
+    minify: false,                  // set to true for production bundles
+    dts: true,                      // emit .d.ts declarations
+    define: {                       // replace env vars at build time
+        'process.env.NODE_ENV': '"production"',
+    },
+    legacyOutput: false,            // add .cjs extension for CJS files
+    watch: process.env.NODE_ENV !== 'production' ? ['src'] : false,
+});
