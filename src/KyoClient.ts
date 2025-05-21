@@ -6,6 +6,9 @@ import { readdir } from "fs/promises";
 import { System } from "./utils/System";
 import path from "path";
 import { pathToFileURL } from "url";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 export interface KyoClientPaths {
     commands?: PathLike,
@@ -95,7 +98,7 @@ export class KyoClient extends Client {
         await KyoClient.fetchFiles(filePath).then(async (files) => {
             for (const file of files) {
                 const fileUrl = pathToFileURL(file).href;
-                const event = (await import(fileUrl))?.default as KyoEvent<keyof ClientEvents>;
+                const event = (await require(fileUrl))?.default as KyoEvent<keyof ClientEvents>;
                 if (!event || !event.event || !event.execute) continue;
 
                 this._events?.set(event.event, Array.from(this._events.get(event.event) || []).concat(event));
@@ -119,7 +122,7 @@ export class KyoClient extends Client {
         await KyoClient.fetchFiles(filePath).then(async (files) => {
             for (const file of files) {
                 const fileUrl = pathToFileURL(file).href;
-                const command = (await import(fileUrl))?.default as KyoCommand<KyoCommandOptions>;
+                const command = (await require(fileUrl))?.default as KyoCommand<KyoCommandOptions>;
                 if (!command.rawData) continue;
 
                 this._commands.set(command.rawData.name, command);
