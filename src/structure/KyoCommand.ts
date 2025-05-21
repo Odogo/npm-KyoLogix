@@ -20,23 +20,17 @@ export class KyoCommand<Type extends KyoCommandOptions> {
         return new KyoCommand(options) as KyoCommand<T> & T;
     }
 
-    private _data: Type;
-
-    private constructor(options: Type) {
-        this._data = options;
-    }
-
-    public get data(): Type { return this._data; }
+    private constructor(public readonly rawData: Type) { }
 
     public isChatCommand(): this is KyoCommand<KCChatInputCommand> {
-        return this._data.type === ApplicationCommandType.ChatInput;
+        return this.rawData.type === ApplicationCommandType.ChatInput;
     }
 
     public isMessageCommand(): this is KyoCommand<KCMessageCommand> {
-        return this._data.type === ApplicationCommandType.Message;
+        return this.rawData.type === ApplicationCommandType.Message;
     }
 
     public isUserCommand(): this is KyoCommand<KCUserCommand> {
-        return this._data.type === ApplicationCommandType.User;
+        return this.rawData.type === ApplicationCommandType.User;
     }
 }

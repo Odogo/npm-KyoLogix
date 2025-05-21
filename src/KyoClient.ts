@@ -120,9 +120,9 @@ export class KyoClient extends Client {
             for (const file of files) {
                 const fileUrl = pathToFileURL(file).href;
                 const command = (await import(fileUrl))?.default as KyoCommand<KyoCommandOptions>;
-                if (!command.data) continue;
+                if (!command.rawData) continue;
 
-                this._commands.set(command.data.name, command);
+                this._commands.set(command.rawData.name, command);
             }
         }).catch((reason) => {
             System.error(`Failed to gather commands from directory ${filePath}: ${reason}`);
@@ -149,7 +149,7 @@ export class KyoClient extends Client {
 
     public override login(token?: string): Promise<string> {
         this.once(Events.ClientReady, async () => {
-            await this.pushCommands(Array.from(this.commands.values().map((opt) => opt.data)));
+            await this.pushCommands(Array.from(this.commands.values().map((opt) => opt.rawData)));
             System.debug("[KyoClient] Client responded with \"Ready\" event!");
         });
 
@@ -165,8 +165,8 @@ export class KyoClient extends Client {
     public async handleIncomingCommand(interaction: Interaction) {
         if (!interaction.isCommand()) return;
 
-        const filtered = this.commands.filter((opt) => opt.data.type === interaction.commandType);
-        const command = filtered.find((opt) => opt.data.name === interaction.commandName);
+        const filtered = this.commands.filter((opt) => opt.rawData.type === interaction.commandType);
+        const command = filtered.find((opt) => opt.rawData.name === interaction.commandName);
         if (command === undefined) {
             System.warn(`[Commands] Failed to find ${interaction.commandName} despite being registered with Discord.`);
             return;
@@ -175,13 +175,13 @@ export class KyoClient extends Client {
         try {
             switch (true) {
                 case command.isChatCommand() && interaction.isChatInputCommand():
-                    await command.data.run(this, interaction);
+                    await command.rawData.run(this, interaction);
                     break;
                 case command.isUserCommand() && interaction.isUserContextMenuCommand():
-                    await command.data.run(this, interaction);
+                    await command.rawData.run(this, interaction);
                     break;
                 case command.isMessageCommand() && interaction.isMessageContextMenuCommand():
-                    await command.data.run(this, interaction);
+                    await command.rawData.run(this, interaction);
                     break;
             }
 
