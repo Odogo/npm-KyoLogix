@@ -25,6 +25,16 @@ export class LogLevel {
  * A lovely utility that sends pretty logging messages into console
  */
 export class System {
+
+    private static config: SystemConfigure = {
+        debug_mode: false,
+        timezone: "Utc"
+    }
+
+    public static configurate(config: SystemConfigure) {
+        this.config = config;
+    }
+
     /**
      * Sends a logging message into the console
      * @param level the level of this message
@@ -32,9 +42,9 @@ export class System {
      */
     public static log(level: LogLevel, printable: any): void {
         if (level === LogLevel.DEBUG)
-            if (process.env.logging_debug === "false") return;
+            if (this.config.debug_mode === false) return;
 
-        let dateFormat = new Date().toLocaleString('en-us', { timeZone: process.env.logging_timezone || 'Utc', timeStyle: 'medium', dateStyle: 'short' });
+        let dateFormat = new Date().toLocaleString('en-us', { timeZone: this.config.timezone, timeStyle: 'medium', dateStyle: 'short' });
         console.log(level.color + " [" + dateFormat + "] [" + level.name.toUpperCase() + "]", printable);
     }
 
@@ -61,4 +71,16 @@ export class System {
      * @param printable the message or object to print
      */
     public static debug(printable: any) { System.log(LogLevel.DEBUG, printable); }
+}
+
+interface SystemConfigure {
+    /**
+     * Enters debug mode, allowing debug logs to be listed
+     */
+    debug_mode: boolean,
+
+    /**
+     * Sets the timezone that the logging messages will use
+     */
+    timezone: string
 }

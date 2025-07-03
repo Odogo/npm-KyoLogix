@@ -52,7 +52,14 @@ package isn't just a simple wrapper around the client class.
 
 ### Events
 
-To create a event, create a new file under the defined events folder within your project and export a default new `KyoEvent` object.
+Events are what Discord.js listens to within guilds (servers) or other sources that things may appear from. There are a *lot* of events that you can listen to.
+
+To create an event, under your already-defined events folder within your project, create a new file and `export default` a new `KyoEvent` class. The constructor will require the
+specific event that you'll be listening to and a callback function for when the event is called.
+
+You can have multiple files listening to the same event, if you like to sort things by modules or for your own reasons.
+
+Below is an example of the `KyoEvent` class, listening on the `InteractionCreate` event:
 
 ```typescript
 // events/InteractionCreate.ts
@@ -61,17 +68,16 @@ export default new KyoEvent(Events.InteractionCreate, async (client, interaction
 });
 ```
 
-The name of the file doesn't matter, it can be whatever you'd like it to be to help your file structure. Additionally, you can sort them further by dropping them into folders!
-
 ### Commands
 
-To create a commands, create a new file under the defined commands folder within your project. Creating a command is different from how'd you expect it, due to the different variants of commands possible.
+Creating a command reqires a little bit more effort compared to Events does.
 
-There are three different types of commands, there's `ChatInput`, `Message`, and `User`. Both `Message` and `User` are related
-to their respective context menus when you right click on that specific object within Discord. `ChatInput` is your standard
-slash command.
+For some background context, there are three (3) different types of commands possible within Discord. They are `ChatInput`, `Message`, and `User`. Both `Message` and `User` are related
+to their respective context menus when you right click on that specific object, and `ChatInput` is your standard slash command.
 
-Within your newly created file, call the `KyoCommand.create()` method. You must define the type, name, and the `run` function. The rest is all descriptions and/or options for your command that is up to the command's function.
+To create a command, you'll need to call the `KyoCommand.create()` method and supply a type to start with. This type is extremely important to determine what your command actually functions as.
+
+Additionally, some common fields also must be supplied when creating a command, typically those are `name`, `run`, and sometimes `description`.
 
 ```typescript
 // commands/ci_HelloWorld.ts (i like to prefix my commands with the type)
@@ -103,4 +109,5 @@ System.error("message");
 System.debug("message");
 ```
 
-By default, `DEBUG` will not print to console. To enable `DEBUG` logging, you must have a .env file with `LOGGING_DEBUG` set to `true`. You can also change the timezone by modifying the `LOGGING_TIMEZONE` field, by default this is set to UTC.
+By default, no `DEBUG` messages will be printed and the timezone will be set to `UTC`. To change this, use `System.configurate()` to modify how the System module behaves and formats the
+system messages.
