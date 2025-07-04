@@ -5,3 +5,4 @@ export type { KCMessageCommand } from './structure/types/KCMessageCommand';
 export type { KCUserCommand } from './structure/types/KCUserCommand';
 export { KyoCommand } from './structure/KyoCommand';
 export { System } from './utils/System';
+export { KyoEvent, type KyoEventExecution } from './structure/KyoEvent';
