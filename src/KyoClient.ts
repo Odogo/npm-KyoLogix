@@ -117,7 +117,7 @@ export class KyoClient extends Client {
         await KyoClient.fetchFiles(filePath).then(async (files) => {
             for (const file of files) {
                 const command = (await require(file))?.default as KyoCommand<KyoCommandOptions>;
-                if (!command.rawData) continue;
+                if (!command || !command.rawData) continue;
 
                 this._commands.set(command.rawData.name, command);
             }
