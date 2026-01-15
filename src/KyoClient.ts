@@ -1,9 +1,9 @@
 import { ApplicationCommandDataResolvable, ApplicationCommandType, Client, ClientEvents, ClientOptions, Collection, Events, Interaction } from "discord.js";
 import { Dirent, PathLike } from 'fs';
-import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand";
-import { KyoEvent } from "./structure/KyoEvent";
+import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand.js";
+import { KyoEvent } from "./structure/KyoEvent.js";
 import { readdir } from "fs/promises";
-import { System } from "./utils/System";
+import { System } from "./utils/System.js";
 import path from "path";
 import { pathToFileURL } from "url";
 

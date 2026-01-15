@@ -1,7 +1,7 @@
 import { ApplicationCommandType } from "discord.js";
-import { KCChatInputCommand } from "./types/KCChatInputCommand";
-import { KCMessageCommand } from "./types/KCMessageCommand";
-import { KCUserCommand } from "./types/KCUserCommand";
+import { KCChatInputCommand } from "./types/KCChatInputCommand.js";
+import { KCMessageCommand } from "./types/KCMessageCommand.js";
+import { KCUserCommand } from "./types/KCUserCommand.js";
 
 /**
  * The different options a KyoCommand could possibly be
