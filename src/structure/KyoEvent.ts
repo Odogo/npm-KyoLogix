@@ -1,16 +1,23 @@
 import { Client, ClientEvents } from "discord.js";
 
+export interface KyoEventOptions<EType extends keyof ClientEvents> {
+    event: EType;
+    type: ExecutionType;
+
+    run: KyoEventExecution<EType>;
+}
+
 /**
  * A listener to any client Event from Discord
  */
 export class KyoEvent<EType extends keyof ClientEvents> {
-    constructor(
-        /** The event type to listen to */
-        public event: EType,
+    
+    public static create<T extends keyof ClientEvents>(options: KyoEventOptions<T>): KyoEvent<T> {
+        return new KyoEvent(options);
+    }
 
-        /** The execution of the event */
-        public execute: KyoEventExecution<EType>
-    ) { }
+    private constructor(public readonly data: KyoEventOptions<EType>) { }
+
 }
 
 /**
@@ -23,3 +30,14 @@ export type KyoEventExecution<EType extends keyof ClientEvents> = (
     /** The arguments of the specific event that is being listened to */
     ...args: ClientEvents[EType]
 ) => Promise<any>
+
+/**
+ * Defines how many times an event should be executed.
+ */
+export enum ExecutionType {
+    /** Event will be executed when first instance is fired, but will not be fired again. (Uses `Client.once()`)*/
+    OnlyOnce = "once",
+
+    /** Event will be executed on every instance of the event type being fired. (Uses `Client.on()`) */
+    Forever  = "on"
+}

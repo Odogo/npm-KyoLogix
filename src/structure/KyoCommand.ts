@@ -1,7 +1,7 @@
 import { ApplicationCommandType } from "discord.js";
-import { KCChatInputCommand } from "./types/KCChatInputCommand";
-import { KCMessageCommand } from "./types/KCMessageCommand";
-import { KCUserCommand } from "./types/KCUserCommand";
+import { KCChatInputCommand } from "./types/KCChatInputCommand.js";
+import { KCMessageCommand } from "./types/KCMessageCommand.js";
+import { KCUserCommand } from "./types/KCUserCommand.js";
 
 /**
  * The different options a KyoCommand could possibly be
@@ -20,17 +20,17 @@ export class KyoCommand<Type extends KyoCommandOptions> {
         return new KyoCommand(options) as KyoCommand<T> & T;
     }
 
-    private constructor(public readonly rawData: Type) { }
+    private constructor(public readonly data: Type) { }
 
     public isChatCommand(): this is KyoCommand<KCChatInputCommand> {
-        return this.rawData.type === ApplicationCommandType.ChatInput;
+        return this.data.type === ApplicationCommandType.ChatInput;
     }
 
     public isMessageCommand(): this is KyoCommand<KCMessageCommand> {
-        return this.rawData.type === ApplicationCommandType.Message;
+        return this.data.type === ApplicationCommandType.Message;
     }
 
     public isUserCommand(): this is KyoCommand<KCUserCommand> {
-        return this.rawData.type === ApplicationCommandType.User;
+        return this.data.type === ApplicationCommandType.User;
     }
 }

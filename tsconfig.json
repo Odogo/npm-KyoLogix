@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
         // Language & Output
-        "target": "ES2020",
-        "module": "commonjs",
-        "lib": ["ES2020"],
+        "target": "es2024",
+        "module": "nodenext",
+        "lib": ["ES2024"],
         "outDir": "dist",
         "rootDir": "src",
 
@@ -16,7 +16,7 @@
         "noFallthroughCasesInSwitch": true, // catch switch…case fall-through
 
         // Module Resolution
-        "moduleResolution": "node", // mimic Node.js resolution
+        "moduleResolution": "nodenext", // mimic Node.js resolution
         "esModuleInterop": true, // allow default imports from CommonJS
         "forceConsistentCasingInFileNames": true, // ensure imports match file casing
         "skipLibCheck": true, // speed up compilation by skipping .d.ts checks
@@ -33,7 +33,7 @@
         "declaration": true,
         "declarationMap": true
     },
-    "include": [ "src" ],
+    "include": [ "src", "tests/consumers/esm/index.mjs" ],
     "exclude": [
         "node_modules",
         "dist",

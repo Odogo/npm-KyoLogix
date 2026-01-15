@@ -1,5 +1,7 @@
 node_modules
 src
+.github/
+tests/
 
 tsconfig.json
 tsup.config.ts

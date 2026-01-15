@@ -1,10 +1,11 @@
-import { ApplicationCommandDataResolvable, Client, ClientEvents, ClientOptions, Collection, Events, Interaction } from "discord.js";
-import { PathLike } from 'fs';
-import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand";
-import { KyoEvent } from "./structure/KyoEvent";
+import { ApplicationCommandDataResolvable, ApplicationCommandType, Client, ClientEvents, ClientOptions, Collection, Events, Interaction } from "discord.js";
+import { Dirent, PathLike } from 'fs';
+import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand.js";
+import { ExecutionType, KyoEvent } from "./structure/KyoEvent.js";
 import { readdir } from "fs/promises";
-import { System } from "./utils/System";
+import { System } from "./utils/System.js";
 import path from "path";
+import { pathToFileURL } from "url";
 
 export interface KyoClientPaths {
     commands?: PathLike,
@@ -18,9 +19,10 @@ export class KyoClient extends Client {
     /**
      * Fetches all files within a directory that match '*.ts', includes sub-folders
      * @param filePath the path to begin searching
+     * @param extensions the file extensions to specifically look for
      * @returns all files within a specific folder, recursively
      */
-    private static async fetchFiles(filePath: PathLike): Promise<string[]> {
+    public static async fetchFiles(filePath: PathLike, extensions?: string[] | undefined): Promise<string[]> {
         return new Promise(async (resolve, reject) => {
             const files: Array<string> = [];
 
@@ -28,10 +30,14 @@ export class KyoClient extends Client {
                 for (const dirent of dirents) {
                     const resolved = path.resolve(String(filePath), dirent.name);
                     if (dirent.isDirectory()) {
-                        await KyoClient.fetchFiles(resolved).then((fetchedFiles) => {
+                        await KyoClient.fetchFiles(resolved, extensions).then((fetchedFiles) => {
                             files.push(...fetchedFiles);
                         });
                     } else if (dirent.isFile()) {
+                        // Ignore files that are not associated with the extensions
+                        if(extensions && !this.verifyFileExtension(dirent, extensions))
+                            return;
+
                         files.push(resolved);
                     } else {
                         System.warn(`[fetchFiles] 'dirent' is not a file or directory: ${dirent.name}`);
@@ -43,10 +49,20 @@ export class KyoClient extends Client {
         });
     }
 
+    private static verifyFileExtension(file: Dirent<string>, extensions: string[]): boolean {
+        for(const ext of extensions) {
+            if(!file.name.endsWith(ext))
+                return false;
+        }
+        return true;
+    }
+
     private _paths: KyoClientPaths;
 
-    private _commands: Collection<string, KyoCommand<KyoCommandOptions>>;
+    private _commands: Collection<ApplicationCommandType, Collection<string, KyoCommand<KyoCommandOptions>>>;
     private _events: Collection<keyof ClientEvents, Array<KyoEvent<keyof ClientEvents>>>;
+
+    private _initialized: boolean = false;
 
     constructor(options: KyoClientOptions) {
         super(options);
@@ -61,29 +77,46 @@ export class KyoClient extends Client {
     }
 
     public get paths() { return this._paths; }
-    public get commands() { return this._commands; }
+    public get rawCommands() { return this._commands; }
+    public get commands() { return this._commands.map((val) => Array.from(val.values())).flat(); }
     public get events() { return this._events; }
+
+    public get initialized() { return this._initialized; }
 
     /**
      * Initializes everything to prepare for login.
      * Additionally, registers all gathered events after population and registers the command handler.
      * 
      * ### It is recommended to use this method.
-     * If you do not use this method, you will have to fetch and push everything manually using {@link KyoClient.gatherEvents()}, {@link KyoClient.gatherCommands()}, and {@link KyoClient.pushCommands()}
+     * If you do not use this method, you will have to fetch and push everything manually
+     * using {@link KyoClient.gatherEvents()}, {@link KyoClient.gatherCommands()}, and {@link KyoClient.pushCommands()}
      */
     public async initialize() {
+        if (this._initialized) throw new Error("Cannot initialize KyoClient when it's already online");
+        this._initialized = true;
+
         await this.gatherEvents();
         await this.gatherCommands();
 
         this.events.forEach((v, k) => v.forEach((e) => {
-            this.on(k, (...args) => e.execute(this, ...args));
+            if (e.data.type === ExecutionType.Forever)
+                this.on(k, (...args) => e.data.run(this, ...args));
+            else
+                this.once(k, (...args) => e.data.run(this, ...args));
         }));
 
         this.on(Events.InteractionCreate, this.handleIncomingCommand);
     }
 
+    public override async destroy(): Promise<void> {
+        super.destroy();
+        this._initialized = false;
+        return;
+    }
+
     /**
-     * Populates the events collection from the files within a specific directory, or if not specified, the events path given during construction
+     * Populates the events collection from the files within a specific directory, 
+     * or if not specified, the events path given during construction
      * @param filePath the events path
      * @throws if a) no path was specified from either sources; b) an error occured during gathering
      */
@@ -91,12 +124,18 @@ export class KyoClient extends Client {
         if (filePath === undefined) filePath = this._paths.events;
         if (filePath === undefined) throw new Error("No path specified for Events population");
 
-        await KyoClient.fetchFiles(filePath).then(async (files) => {
+        await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]).then(async (files) => {
             for (const file of files) {
-                const event = (await require(file))?.default as KyoEvent<keyof ClientEvents>;
-                if (!event || !event.event || !event.execute) continue;
+                try {
+                    const mod = await import(pathToFileURL(file).href);
+                    const event = mod?.default as KyoEvent<keyof ClientEvents>;
+                    if (!event || !event.data) continue;
 
-                this._events?.set(event.event, Array.from(this._events.get(event.event) || []).concat(event));
+                    this._events?.set(event.data.event, Array.from(this._events.get(event.data.event) || []).concat(event));
+                } catch (error) {
+                    System.error(`Failed to interpret file ${file} into a KyoEvent object.`);
+                    throw error;
+                }
             }
         }).catch((reason) => {
             System.error(`Failed to gather events from directory ${filePath}: ${reason}`);
@@ -106,7 +145,8 @@ export class KyoClient extends Client {
     }
 
     /**
-     * Populates the commands collection from the files within a specific directory, or if not specified, the commands path given during construction
+     * Populates the commands collection from the files within a specific directory,
+     * or if not specified, the commands path given during construction
      * @param filePath the commands path
      * @throws if a) no path was specified from either sources; b) an error occured during gathering
      */
@@ -114,12 +154,21 @@ export class KyoClient extends Client {
         if (filePath === undefined) filePath = this._paths.commands;
         if (filePath === undefined) throw new Error("No path specified for Commands population");
 
-        await KyoClient.fetchFiles(filePath).then(async (files) => {
+        await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]).then(async (files) => {
             for (const file of files) {
-                const command = (await require(file))?.default as KyoCommand<KyoCommandOptions>;
-                if (!command || !command.rawData) continue;
+                try {
+                    const mod = await import(pathToFileURL(file).href);
+                    const command = mod?.default as KyoCommand<KyoCommandOptions>;
+                    if (!command || !command.data) continue;
 
-                this._commands.set(command.rawData.name, command);
+                    if (!this._commands.has(command.data.type))
+                        this._commands.set(command.data.type, new Collection());
+
+                    this._commands.get(command.data.type)?.set(command.data.name, command);
+                } catch (error) {
+                    System.error(`Failed to interpret file ${file} into a KyoCommand object.`);
+                    throw error;
+                }
             }
         }).catch((reason) => {
             System.error(`Failed to gather commands from directory ${filePath}: ${reason}`);
@@ -131,7 +180,7 @@ export class KyoClient extends Client {
      * Pushes all populated commands to Discord to ensure all commands are registered
      * @param commands the list of commands that we should register to discord
      */
-    private async pushCommands(commands: Array<ApplicationCommandDataResolvable>) {
+    public async pushCommands(commands: Array<ApplicationCommandDataResolvable>) {
         if (!this.commands) throw new Error("Commands have not been initialized");
 
         System.debug("[KyoClient] Pushing registered commands to Discord...");
@@ -146,7 +195,8 @@ export class KyoClient extends Client {
 
     public override login(token?: string): Promise<string> {
         this.once(Events.ClientReady, async () => {
-            await this.pushCommands(Array.from(this.commands.values()).map((opt) => opt.rawData));
+            await this.pushCommands(this.commands.map((opt) => opt.data));
+
             System.debug("[KyoClient] Client responded with \"Ready\" event!");
         });
 
@@ -156,14 +206,15 @@ export class KyoClient extends Client {
     /**
      * Handles an incoming request for any commands to execute their specific command.
      * 
-     * Override this function if you seek different functionality. Only do this if you know what you are doing.
+     * You can override this method if you would like to handle commands differently, however it is recommended
+     * to use the default handling, unless you know what you're doing.
      * @param interaction the interaction
      */
     public async handleIncomingCommand(interaction: Interaction) {
         if (!interaction.isCommand()) return;
 
-        const filtered = this.commands.filter((opt) => opt.rawData.type === interaction.commandType);
-        const command = filtered.find((opt) => opt.rawData.name === interaction.commandName);
+        const filtered = this.commands.filter((opt) => opt.data.type === interaction.commandType);
+        const command = filtered.find((opt) => opt.data.name === interaction.commandName);
         if (command === undefined) {
             System.warn(`[Commands] Failed to find ${interaction.commandName} despite being registered with Discord.`);
             return;
@@ -172,13 +223,13 @@ export class KyoClient extends Client {
         try {
             switch (true) {
                 case command.isChatCommand() && interaction.isChatInputCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
                 case command.isUserCommand() && interaction.isUserContextMenuCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
                 case command.isMessageCommand() && interaction.isMessageContextMenuCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
             }
 
