@@ -42,7 +42,8 @@ jobs:
           cd /tmp/consumer-cjs
           npm init -y >/dev/null
           npm i --silent "$GITHUB_WORKSPACE/${{ env.TARBALL }}"
-          node "$GITHUB_WORKSPACE/tests/consumers/cjs/index.cjs"
+          cp "$GITHUB_WORKSPACE/tests/consumers/cjs/index.cjs" ./index.cjs
+          node ./index.cjs
 
       - name: Test ESM consumer
         run: |
@@ -50,4 +51,5 @@ jobs:
           cd /tmp/consumer-esm
           npm init -y >/dev/null
           npm i --silent "$GITHUB_WORKSPACE/${{ env.TARBALL }}"
-          node "$GITHUB_WORKSPACE/tests/consumers/esm/index.mjs"
+          cp "$GITHUB_WORKSPACE/tests/consumers/esm/index.mjs" ./index.mjs
+          node ./index.mjs
