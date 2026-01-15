@@ -33,7 +33,7 @@
         "declaration": true,
         "declarationMap": true
     },
-    "include": [ "src" ],
+    "include": [ "src", "tests/consumers/esm/index.mjs" ],
     "exclude": [
         "node_modules",
         "dist",

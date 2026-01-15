@@ -1,7 +1,7 @@
 import { ApplicationCommandDataResolvable, ApplicationCommandType, Client, ClientEvents, ClientOptions, Collection, Events, Interaction } from "discord.js";
 import { Dirent, PathLike } from 'fs';
 import { KyoCommand, KyoCommandOptions } from "./structure/KyoCommand.js";
-import { KyoEvent } from "./structure/KyoEvent.js";
+import { ExecutionType, KyoEvent } from "./structure/KyoEvent.js";
 import { readdir } from "fs/promises";
 import { System } from "./utils/System.js";
 import path from "path";
@@ -97,7 +97,10 @@ export class KyoClient extends Client {
         await this.gatherCommands();
 
         this.events.forEach((v, k) => v.forEach((e) => {
-            this.on(k, (...args) => e.data.execute(this, ...args));
+            if (e.data.type === ExecutionType.Forever)
+                this.on(k, (...args) => e.data.execute(this, ...args));
+            else
+                this.once(k, (...args) => e.data.execute(this, ...args));
         }));
 
         this.on(Events.InteractionCreate, this.handleIncomingCommand);
@@ -154,12 +157,12 @@ export class KyoClient extends Client {
                 try {
                     const mod = await import(pathToFileURL(file).href);
                     const command = mod?.default as KyoCommand<KyoCommandOptions>;
-                    if (!command || !command.rawData) continue;
+                    if (!command || !command.data) continue;
 
-                    if (!this._commands.has(command.rawData.type))
-                        this._commands.set(command.rawData.type, new Collection());
+                    if (!this._commands.has(command.data.type))
+                        this._commands.set(command.data.type, new Collection());
 
-                    this._commands.get(command.rawData.type)?.set(command.rawData.name, command);
+                    this._commands.get(command.data.type)?.set(command.data.name, command);
                 } catch (error) {
                     System.error(`Failed to interpret file ${file} into a KyoCommand object.`);
                     throw error;
@@ -190,7 +193,7 @@ export class KyoClient extends Client {
 
     public override login(token?: string): Promise<string> {
         this.once(Events.ClientReady, async () => {
-            await this.pushCommands(this.commands.map((opt) => opt.rawData));
+            await this.pushCommands(this.commands.map((opt) => opt.data));
 
             System.debug("[KyoClient] Client responded with \"Ready\" event!");
         });
@@ -208,8 +211,8 @@ export class KyoClient extends Client {
     public async handleIncomingCommand(interaction: Interaction) {
         if (!interaction.isCommand()) return;
 
-        const filtered = this.commands.filter((opt) => opt.rawData.type === interaction.commandType);
-        const command = filtered.find((opt) => opt.rawData.name === interaction.commandName);
+        const filtered = this.commands.filter((opt) => opt.data.type === interaction.commandType);
+        const command = filtered.find((opt) => opt.data.name === interaction.commandName);
         if (command === undefined) {
             System.warn(`[Commands] Failed to find ${interaction.commandName} despite being registered with Discord.`);
             return;
@@ -218,13 +221,13 @@ export class KyoClient extends Client {
         try {
             switch (true) {
                 case command.isChatCommand() && interaction.isChatInputCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
                 case command.isUserCommand() && interaction.isUserContextMenuCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
                 case command.isMessageCommand() && interaction.isMessageContextMenuCommand():
-                    await command.rawData.run(this, interaction);
+                    await command.data.run(this, interaction);
                     break;
             }
 
