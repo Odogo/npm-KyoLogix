@@ -3,7 +3,8 @@ import { Client, ClientEvents } from "discord.js";
 export interface KyoEventOptions<EType extends keyof ClientEvents> {
     event: EType;
     type: ExecutionType;
-    execute: KyoEventExecution<EType>
+
+    run: KyoEventExecution<EType>;
 }
 
 /**
@@ -34,9 +35,9 @@ export type KyoEventExecution<EType extends keyof ClientEvents> = (
  * Defines how many times an event should be executed.
  */
 export enum ExecutionType {
-    /** Event will be executed when first instance is fired, but will not be fired again. */
+    /** Event will be executed when first instance is fired, but will not be fired again. (Uses `Client.once()`)*/
     OnlyOnce = "once",
 
-    /** Event will be executed on every instance of the event type being fired. */
+    /** Event will be executed on every instance of the event type being fired. (Uses `Client.on()`) */
     Forever  = "on"
 }

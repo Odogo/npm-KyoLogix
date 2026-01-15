@@ -98,9 +98,9 @@ export class KyoClient extends Client {
 
         this.events.forEach((v, k) => v.forEach((e) => {
             if (e.data.type === ExecutionType.Forever)
-                this.on(k, (...args) => e.data.execute(this, ...args));
+                this.on(k, (...args) => e.data.run(this, ...args));
             else
-                this.once(k, (...args) => e.data.execute(this, ...args));
+                this.once(k, (...args) => e.data.run(this, ...args));
         }));
 
         this.on(Events.InteractionCreate, this.handleIncomingCommand);
