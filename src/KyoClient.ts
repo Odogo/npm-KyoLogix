@@ -81,6 +81,8 @@ export class KyoClient extends Client {
     public get commands() { return this._commands.map((val) => Array.from(val.values())).flat(); }
     public get events() { return this._events; }
 
+    public get initialized() { return this._initialized; }
+
     /**
      * Initializes everything to prepare for login.
      * Additionally, registers all gathered events after population and registers the command handler.
@@ -178,7 +180,7 @@ export class KyoClient extends Client {
      * Pushes all populated commands to Discord to ensure all commands are registered
      * @param commands the list of commands that we should register to discord
      */
-    private async pushCommands(commands: Array<ApplicationCommandDataResolvable>) {
+    public async pushCommands(commands: Array<ApplicationCommandDataResolvable>) {
         if (!this.commands) throw new Error("Commands have not been initialized");
 
         System.debug("[KyoClient] Pushing registered commands to Discord...");
