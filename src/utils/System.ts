@@ -19,6 +19,7 @@ export class LogLevel {
     static readonly INFO = new LogLevel("\x1b[32m", "INFO");
     static readonly WARN = new LogLevel("\x1b[33m", "WARN");
     static readonly DEBUG = new LogLevel("\x1b[34m", "DEBUG");
+    static readonly RESET_COLOR = "\x1b[0m";
 }
 
 /**
@@ -31,8 +32,8 @@ export class System {
         timezone: "Utc"
     }
 
-    public static configurate(config: SystemConfigure) {
-        this.config = config;
+    public static configurate(config: Partial<SystemConfigure>) {
+        this.config = { ...this.config, ...config};
     }
 
     /**
@@ -45,7 +46,7 @@ export class System {
             if (this.config.debug_mode === false) return;
 
         let dateFormat = new Date().toLocaleString('en-us', { timeZone: this.config.timezone, timeStyle: 'medium', dateStyle: 'short' });
-        console.log(level.color + " [" + dateFormat + "] [" + level.name.toUpperCase() + "]", printable);
+        console.log(level.color + " [" + dateFormat + "] [" + level.name.toUpperCase() + "]", printable, LogLevel.RESET_COLOR);
     }
 
     /**
