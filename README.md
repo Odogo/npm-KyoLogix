@@ -59,11 +59,13 @@ To create an event, you'll need to specify which event you'll be listening to an
 the method.
 
 Below are the fields that the `#create(...)` method will accept.
-| Field | Required | Description |
-| --- | --- | --- |
-| `type` | ✓ | How the event is listening, whether we should fire the event once, or for all instances this occurs |
-| `event` | ✓ | The specific Discord.js event to listen for |
-| `run` | ✓ | An async function accepting any event parameters to execute logic on when the event is fired |
+| Field | Required | Description | Type |
+| --- | --- | --- | --- |
+| `type` | ✓ | How the event is listening, whether we should fire the event once, or for all instances this occurs | `ExecutionType`
+| `event` | ✓ | The specific Discord.js event to listen for | `Events`
+| `run` | ✓ | An async function accepting any event parameters to execute logic on when the event is fired | `(...) => Promise<any>`[^1]
+
+[^1]: The function's arguments depend on what event we're listening to. Refer to documentation pertaining to that event.
 
 Below is an example using the `InteractionCreate` event:
 
@@ -92,17 +94,17 @@ Below is a table of the typical requirements and optional fields of a command, h
 | Field | Required | Description | Type |
 | --- | --- | --- | --- |
 | `name`        | ✓ | The name of the command | `string`
-| `type`        | ✓ | The type of the command | `ApplicationCommandType`[^1]
+| `type`        | ✓ | The type of the command | `ApplicationCommandType`[^2]
 | `description` | ✓ | A description for the commnad | `string`
-| `run`         | ✓ | The execution logic for the command | `(client, interaction) => Promise<any>`[^2]
+| `run`         | ✓ | The execution logic for the command | `(client, interaction) => Promise<any>`[^3]
 | `contexts`    | X | Where this command can be executed, i.e. in a guild, the user's DMs with the bot, etc. | `InteractionContextType[]`
 | `nsfw`        | X | Whether this command should be age-restricted | `boolean`
-| `options`     | X | The options for the event when executed, used to supply arguments for commands. [^3] | `ApplicationCommandOptionData[]`
+| `options`     | X | The options for the event when executed, used to supply arguments for commands. [^4] | `ApplicationCommandOptionData[]`
 | ...           | ... | See [Discord's documentation for additional fields](https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure) | ...
 
-[^1]: `PrimaryEntryPoint` is not accepted here.
-[^2]: The `interaction` field does change depending on which command `type` is selected. IntelliSense should update accordingly when hovering over the `interaction` argument when making the function. You do not have to make sure the interaction is the given interaction via `#isChatInputCommand()`, for example.
-[^3]: Requires the `ChatInput` type.
+[^2]: `PrimaryEntryPoint` is not accepted here.
+[^3]: The `interaction` field does change depending on which command `type` is selected. IntelliSense should update accordingly when hovering over the `interaction` argument when making the function. You do not have to make sure the interaction is the given interaction via `#isChatInputCommand()`, for example.
+[^4]: Requires the `ChatInput` type.
 
 Below are four examples on how to use this system and how they are used:
 
