@@ -23,7 +23,8 @@
 	"module": "./dist/index.mjs",
 	"types": "./dist/index.d.ts",
 	"scripts": {
-		"build": "tsup"
+		"build": "tsup",
+		"dev": "tsup --watch"
 	},
 	"dependencies": {
 		"discord.js": "^14.19.3"

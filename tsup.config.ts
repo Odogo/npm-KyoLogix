@@ -14,5 +14,5 @@ export default defineConfig({
         'process.env.NODE_ENV': '"production"',
     },
     legacyOutput: false,            // add .cjs extension for CJS files
-    watch: process.env.NODE_ENV !== 'production' ? ['src'] : false,
+    watch: false,
 });
