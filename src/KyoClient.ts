@@ -14,6 +14,8 @@ export interface KyoClientPaths {
 
 export type KyoClientOptions = ClientOptions & KyoClientPaths;
 
+type AnyKyoEvent = KyoEvent<any>;
+
 export class KyoClient extends Client {
 	
 	/**
@@ -65,7 +67,7 @@ export class KyoClient extends Client {
 	private _paths: KyoClientPaths;
 	
 	private _commands: Collection<ApplicationCommandType, Collection<string, KyoCommand<KyoCommandOptions>>>;
-	private _events: Collection<keyof ClientEvents, Array<KyoEvent<keyof ClientEvents>>>;
+	private _events: Collection<keyof ClientEvents, Array<AnyKyoEvent>>;
 	
 	private _initialized: boolean = false;
 	
@@ -159,7 +161,7 @@ export class KyoClient extends Client {
 	 * @param event the event to validate and register
 	 * @throws if the event (and its data) does not exist, or the event is missing required fields.
 	 */
-	public addEvent(event: KyoEvent<keyof ClientEvents>) {
+	public addEvent<EType extends keyof ClientEvents>(event: KyoEvent<EType>) {
 		if (!event || !event.data)
 			throw "Event data does not exist"
 		if (!event.data.event || !event.data.run || !event.data.type)
@@ -195,12 +197,8 @@ export class KyoClient extends Client {
 				try {
 					const mod = await import(pathToFileURL(file).href);
 					const command = mod?.default as KyoCommand<KyoCommandOptions>;
-					if (!command || !command.data) continue;
 					
-					if (!this._commands.has(command.data.type))
-						this._commands.set(command.data.type, new Collection());
-					
-					this._commands.get(command.data.type)?.set(command.data.name, command);
+					this.addCommand(command);
 				} catch (error) {
 					System.error(`Failed to interpret file ${file} into a KyoCommand object.`);
 					throw error;
@@ -218,7 +216,10 @@ export class KyoClient extends Client {
 		if (!command.data.name || !command.data.type || !command.data.run)
 			throw "Missing components of command body that is required";
 
+		if (!this._commands.has(command.data.type))
+			this._commands.set(command.data.type, new Collection());
 
+		this._commands.get(command.data.type)?.set(command.data.name, command);
 	}
 	
 	/**

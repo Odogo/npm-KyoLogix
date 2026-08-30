@@ -4,8 +4,6 @@ A helpful package that resolves around making Discord bots easier.
 
 ## Installation
 
-To install this package, simply install this package.
-
 ```shell
 npm install kyologix
 ```

@@ -8,7 +8,7 @@ export type { KCChatInputCommand, KCCICommandExecute } from './structure/types/K
 export type { KCMessageCommand, KCMCommandExecute } from './structure/types/KCMessageCommand.js';
 export type { KCUserCommand, KCUCommandExecute } from './structure/types/KCUserCommand.js';
 
-export { KyoEvent } from './structure/KyoEvent.js';
-export type { KyoEventOptions, KyoEventExecution, ExecutionType } from './structure/KyoEvent.js';
+export { KyoEvent, ExecutionType } from './structure/KyoEvent.js';
+export type { KyoEventOptions, KyoEventExecution } from './structure/KyoEvent.js';
 
 export { System, LogLevel } from './utils/System.js';
