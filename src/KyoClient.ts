@@ -30,27 +30,21 @@ export class KyoClient extends Client {
 		if (!existsSync(filePath))
 			return files;
 
-		try {
-			await readdir(filePath, { withFileTypes: true }).then(async (dirents) => {
-				for (const dirent of dirents) {
-					const resolved = path.resolve(String(filePath), dirent.name);
+		const dirents = await readdir(filePath, { withFileTypes: true });
+		for (const dirent of dirents) {
+			const resolved = path.resolve(String(filePath), dirent.name);
 
-					if (dirent.isDirectory()) {
-						await KyoClient.fetchFiles(resolved, extensions).then((fetchedFiles) => {
-							files.push(...fetchedFiles);
-						});
+			if (dirent.isDirectory()) {
+				const recursive = await KyoClient.fetchFiles(resolved, extensions);
+				files.push(...recursive);
 
-					} else if (dirent.isFile()) {
-						// Ignore files that are not associated with the extensions
-						if (extensions && !this.verifyFileExtension(dirent, extensions))
-							return;
-						files.push(resolved);
+			} else if (dirent.isFile()) {
+				// Ignore files that are not associated with the extensions
+				if (extensions && !this.verifyFileExtension(dirent, extensions))
+					continue;
+				files.push(resolved);
 
-					} else System.warn(`[fetchFiles] 'dirent' is not a file or directory: ${dirent.name}`);
-				}
-			});
-		} catch (error) {
-			throw error;
+			} else System.warn(`[fetchFiles] 'dirent' is not a file or directory: ${dirent.name}`);
 		}
 		
 		return files;
@@ -58,10 +52,10 @@ export class KyoClient extends Client {
 	
 	private static verifyFileExtension(file: Dirent<string>, extensions: string[]): boolean {
 		for(const ext of extensions) {
-			if(!file.name.endsWith(ext))
-				return false;
+			if(file.name.endsWith(ext))
+				return true;
 		}
-		return true;
+		return false;
 	}
 	
 	private _paths: KyoClientPaths;
@@ -136,24 +130,18 @@ export class KyoClient extends Client {
 	public async gatherEvents(filePath?: PathLike): Promise<void> {
 		if (filePath === undefined) filePath = this._paths.events;
 		if (filePath === undefined) throw new Error("No path was specified to gather events with. Ensure you set one if you're using #initialize() or #gatherEvents()");
-		
-		await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]).then(async (files) => {
-			for (const file of files) {
-				try {
-					const mod = await import(pathToFileURL(file).href);
-					const event = mod?.default as KyoEvent<keyof ClientEvents>;
-					
-					this.addEvent(event);
-				} catch (error) {
-					System.error(`Failed to interpret file ${file} into a KyoEvent object.`);
-					throw error;
-				}
+
+		const files = await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]);
+		for (const file of files) {
+			try {
+				const mod = await import(pathToFileURL(file).href);
+				const event = mod?.default as KyoEvent<keyof ClientEvents>;
+
+				this.addEvent(event);
+			} catch (error) {
+				System.warn(`Failed to interpret file ${file} into a KyoEvent object.`);
 			}
-		}).catch((reason) => {
-			System.error(`Failed to gather events from directory ${filePath}: ${reason}`);
-			System.error(reason);
-			throw new Error(reason);
-		});
+		}
 	}
 
 	/**
@@ -191,23 +179,18 @@ export class KyoClient extends Client {
 	public async gatherCommands(filePath?: PathLike): Promise<void> {
 		if (filePath === undefined) filePath = this._paths.commands;
 		if (filePath === undefined) throw new Error("No path was specified to gather commands with. Ensure you set one if you're using #initialize() or #gatherCommands()");
-		
-		await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]).then(async (files) => {
-			for (const file of files) {
-				try {
-					const mod = await import(pathToFileURL(file).href);
-					const command = mod?.default as KyoCommand<KyoCommandOptions>;
-					
-					this.addCommand(command);
-				} catch (error) {
-					System.error(`Failed to interpret file ${file} into a KyoCommand object.`);
-					throw error;
-				}
+
+		const files = await KyoClient.fetchFiles(filePath, [".js", ".mjs", ".cjs", ".ts"]);
+		for (const file of files) {
+			try {
+				const mod = await import(pathToFileURL(file).href);
+				const command = mod?.default as KyoCommand<KyoCommandOptions>;
+
+				this.addCommand(command);
+			} catch (error) {
+				System.warn(`Failed to interpret file ${file} into a KyoCommand object.`);
 			}
-		}).catch((reason) => {
-			System.error(`Failed to gather commands from directory ${filePath}: ${reason}`);
-			throw new Error(reason);
-		});
+		}
 	}
 
 	public addCommand(command: KyoCommand<KyoCommandOptions>) {
